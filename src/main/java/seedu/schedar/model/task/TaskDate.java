@@ -28,6 +28,7 @@ public class TaskDate implements Comparable<TaskDate> {
     public TaskDate(String dateString) {
         requireNonNull(dateString);
         checkArgument(isValidDate(dateString), MESSAGE_CONSTRAINTS);
+        assert(isValidDate(dateString));
         this.date = LocalDate.parse(dateString);
     }
 

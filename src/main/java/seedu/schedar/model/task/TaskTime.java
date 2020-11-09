@@ -28,6 +28,7 @@ public class TaskTime {
     public TaskTime(String timeString) {
         requireNonNull(timeString);
         checkArgument(isValidTime(timeString), MESSAGE_CONSTRAINTS);
+        assert(isValidTime(timeString));
         this.time = LocalTime.parse(timeString);
     }
 
