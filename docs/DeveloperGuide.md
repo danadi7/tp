@@ -182,6 +182,87 @@ The following sequence diagram shows how a typical add operation, as explained i
 * **Alternative 2:** Have a single `add` command, with the type of task being determined by the attributes supplied by the user, or a separate parameter like `/todo`.
   * Pros: User only needs to know a single command to add tasks.
   * Cons: The logic needed to process the command would be more complex, and thus may be more prone to errors.
+  
+### Count Tasks
+
+#### Implementation
+
+ScheDar has the ability to count the number of tasks in current task list.
+
+Given below is an example for counting tasks.
+
+Step 1: The user inputs the command `count`.
+
+Step 2: The input command is passed into `LogicManager` from the UI.
+
+Step 3: `LogicManager` calls on the `parseCommand()` method of `TaskManagerParser` to parse the command. Upon recognising the input as a count command, `TaskManagerParser` calls on `CountCommandParser` to process the input parameters.
+
+Step 4: `CountCommandParser` creates a `CountCommand` object, which is returned to `TaskManagerParser`, then `LogicManager` for execution.
+
+Step 5: `LogicManager` calls on the `execute()` method of the `CountCommand` object, which counts the tasks in ScheDar.
+
+Step 6: Upon successful execution, a `CommandResult` object is created, and returned to `LogicManager` and then the UI, where a success message is displayed to the user.
+
+The following sequence diagram shows how a typical add operation, as explained in steps 2 to 6 above, works:
+
+![CountSequenceDiagram](images/CountSequenceDiagram.png)
+
+#### Design Considerations
+
+##### Aspect: Displays more statistics details to user
+
+* **Alternative 1 (current choice):** Display only the total number of tasks to the user.
+  * Pros: Easier to implement. Less error prone.
+  * Cons: Information displayed to user is limited.
+  
+* **Alternative 2:** Display the total number of tasks as well as the number of tasks of each type (todo/event/deadline), and the number of done/undone tasks. 
+  * Pros: Displays more useful information to the user.
+  * Cons: More error prone.
+  
+* Alternative 1 can be extended to Alternative 2. Due to time limit, we did not implement the extension.
+
+### Editing Tasks
+
+#### Implementation
+
+Similar to add command, each type of task has it own corresponding edit command. All of the commands extend the `Command` class. Currently, the commands are:
+* `EditTodoCommand` for `ToDo`-type Tasks
+* `EditDeadlineCommand` for `Deadline`-type Tasks
+* `EditEventCommand for `Event`-type Tasks
+
+As each type of task stores different types of variables as required (such as date or time), each task may have different command parameters, and thus would need to be parsed differently. 
+
+Given below is an example for editing a `ToDo`-type task.
+
+Step 1: The user inputs the command `editTodo 1 t/project`, which is supposed to edit`ToDo` at index `1` with a new title `project`.
+
+Step 2: The input command is passed into `LogicManager` from the UI.
+
+Step 3: `LogicManager` calls on the `parseCommand()` method of `TaskManagerParser` to parse the command. Upon recognising the input as a command to edit a `ToDo`-type task, `TaskManagerParser` calls on `EditTodoCommandParser` to process the input parameters.
+
+Step 4: `EditTodoCommandParser` calls on the `tokenize` method of `ArgumentTokenizer` to tokenize the commands into an `ArgumentMultiMap`. It then extracts the values for each command parameter, and uses them to create the `EditTodoDescriptor` object.
+
+Step 5: `EditTodoCommandParser` uses the `EditTodoDescriptor` object to create an `EditTodoCommand` object, which is returned to `TaskManagerParser`, then `LogicManager` for execution.
+
+Step 6: `LogicManager` calls on the `execute()` method of the `EditTodoCommand` object, which edits the `ToDo` in the ScheDar's task manager.
+
+Step 7: Upon successful execution, a `CommandResult` object is created, and returned to `LogicManager` and then the UI, where a success message is displayed to the user.
+
+The following sequence diagram shows how a typical add operation, as explained in steps 2 to 7 above, works:
+
+![EditSequenceDiagram](images/EditSequenceDiagram.png)
+
+#### Design Considerations
+  
+##### Aspect: How commands to edit different types of tasks are implemented
+
+* **Alternative 1 (current choice):** Each type of task has its own edit command.
+  * Pros: The parser would be aware of the type of task being edited, and can show the user an error message if an invalid parameter is edited.
+  * Cons: There are multiple edit commands, and the commands are longer, making the process more inconvenient for users.
+  
+* **Alternative 2:** Have a single `edit` command, with the type of task being determined by its index number provided.
+  * Pros: The command is easier for user.
+  * Cons: The logic needed to process the command would be more complex. More error prone.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -211,7 +292,7 @@ The following sequence diagram shows how a typical add operation, as explained i
 **Value proposition**: Assist students in the planning of their lecture and tutorial schedules, as well as keep track of assignments and deadlines.
 
 
-### User stories
+### Implemented User stories
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
@@ -224,25 +305,28 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *`  | a student                                  | delete tasks    | remove cancelled obligations.        |
 | `* * *`  | a student with many tasks                  |search through my task using keywords   | I can find relevant tasks quickly |
 | `* * *`  | an advanced user                           |edit the source file of todo list directly   |make changes without going through the CLI|
-|`* *`| a NUS student | add my periodic asks at once | avoid adding them repeatedly |
 | `* *` | a student bad at remembering deadlines | sort my deadlines based on date | know which deadline is coming soon |
-| `* *` | an efficient student | type abbreviated commands | type super fast |
-| `* *` | a student | see the statistics of my tasks | preview the workload I will encounter in the coming weeks |
-| `* *` | self-consistent NUS student | add task to different task | make my plan well organised |
-| `* *` | a well organised student |  see the overview of current week's tasks | plan my days well |
 | `*` | an every day user | receive a warm welcome when I open the app | feel pleased |
-| `*` | a student likes customisation | customise some parts of UI | feel more comfortable when I use it |
 | `*` | a student | set a free day for my timetable by making proper arrangement | have a long weekend |
-| `*` | a user | get notifications for recent events and coming deadlines | will not miss them |
 | `*` | an organised user | be able to add tags to my task and filter by tags | sort my tasks by topic |
-| `*` | a lazy user | past and add a bunch of different tasks at once through command line | add them fastly |
-| `*` | a student with a lot of group projects | assiciate tasks with people | keep track which group member is doing what |
 | `*` | an advanced user | add dates to todos to convert them to events/deadlines | I don't have to delete and create a new task |
 | `*` | a user | change the description of a task | update them without deleting |
 | `*` | a forgetful user | have duplicate tasks deleted | avoid the same task appearing twice |
+| `*` | a careless student | undo my commands | correct my mistakes |
+| `*` | a normal user |  go through my tasks upon opening the app | be well-informed |
+
+### Potential User stories
+
+| Priority | As …​                                    | I want to …​                     | So that I can…​                                                        |
+|:--------:| ------------------------------------------ | ------------------------------ | ---------------------------------------------------------------------- |
+|`* *`| a NUS student | add my periodic asks at once | avoid adding them repeatedly |
+| `* *` | an efficient student | type abbreviated commands | type super fast |
+| `* *` | a student | see the statistics of my tasks | preview the workload I will encounter in the coming weeks |
+| `* *` | a NUS student |  add class schedule by module code |  |
+| `*` | a student likes customisation | customise some parts of UI | feel more comfortable when I use it |
+| `*` | a user | get notifications for recent events and coming deadlines | will not miss them |
+| `*` | a student with a lot of group projects | assiciate tasks with people | keep track which group member is doing what |
 | `*` | a lazy student | have acces to links to websites or file in the description | have access to related resources easily |
-| `*` | a careless student | undo my commands | avoid misoperation |
-| `*` | a normal user |  go through my tasks opon opening the app | be well informed |
 
 ### Use cases
 
@@ -252,8 +336,17 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **MSS**
 
-1. User enters add command specifying task type
-2. ScheDar give a response
+1. User enters add command corresponding to task-type (eg. `todo`).
+2. ScheDar adds task to list.
+
+    Use case ends.
+    
+**Use case: count the number of tasks**
+
+**MSS**
+
+1. User requests to count the number of tasks in the list
+2. ScheDar count tasks
 
     Use case ends.
 
@@ -261,8 +354,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **MSS**
 
-1. User requests to delete a specific task in the list
-2. ScheDar deletes the task
+1. User requests to delete a specific task in the list by specifying the index.
+2. ScheDar deletes the task.
 
     Use case ends.
 
@@ -277,48 +370,13 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     * 3a1. ScheDar shows an error message.
 
       Use case resumes at step 1.
-
-**Use case: assign priority to a task**
-
-**MSS**
-
-1. User requests to assign priority a specific task in the list
-2. ScheDar gives priority to the task
-
-    Use case ends.
-
-**Extensions**
-
-* 2a. The list is empty.
-
-  Use case ends.
-
-* 3a. The given index is invalid.
-
-    * 3a1. ScheDar shows an error message.
-
-      Use case resumes at step 1.
-
-* 4a. The task already have a priority.
-
-    * 4a1. ScheDar shows a confirmation about overriding.
-
-         * 4a1a User confirms override
-
-         * ScheDar gives new priority to the task
-
-           Use case ends
-
-         * 4a1a User denies override
-
-           Use case resumes at step 1.
 
 **Use case: mark a task as done**
 
 **MSS**
 
-1. User requests to mark a specific task in the list as done
-2. ScheDar marks the task
+1. User requests to mark a specific task in the list as done by specifying the index.
+2. ScheDar marks the task as done.
 
     Use case ends.
 
@@ -344,25 +402,31 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **MSS**
 
-1. User requests to retrieve a last-deleted task
-2. ScheDar retrieves the task
+1. User requests to undo last command.
+2. ScheDar returns to the previous state it was in before the last command.
 
     Use case ends.
 
 **Extensions**
 
-* 2a. The rubbish bin is empty.
+* 2a. The command is the first command entered.
 
-    * 3a1. ScheDar shows an error message.
+    * 2a1. ScheDar shows an error message.
 
+  Use case ends.
+  
+* 2a. Retrieving the last-deleted task will cause a duplicate of tasks.
+  
+    * 2a1. ScheDar shows an error message.
+  
   Use case ends.
 
 **Use case: search for tasks by keyword**
 
 **MSS**
 
-1. User requests search with keyward
-2. ScheDar get matched tasks and list them
+1. User requests a search by keyword.
+2. ScheDar get matched tasks and list them.
 
     Use case ends.
 
@@ -370,7 +434,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 2a. The keyword is not found.
 
-   * 3a1. ScheDar shows an warning message.
+   * 3a1. ScheDar shows a warning message.
 
   Use case ends.
 
@@ -378,12 +442,20 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **MSS**
 
-1. User requests to sort task shown in the list
-2. ScheDar sorts tasks
+1. User requests to sort task shown in the list.
+2. ScheDar sorts tasks chronologically according to date and time.
+
+    Use case ends.
+    
+**Use case: exit**
+
+**MSS**
+
+1. User requests to exit ScheDar
+2. ScheDar exits
 
     Use case ends.
 
-*{More to be added}*
 
 ### Non-Functional Requirements
 
@@ -441,3 +513,24 @@ testers are expected to do more *exploratory* testing.
       Expected: Similar to previous.
 
 1. _{ more test cases …​ }_
+
+## **Appendix: Effort**
+
+### **Challenge 1: 3 different types of `Task`**
+
+The fact that there are 3 different types of tasks, each extending the base `Task` abstract class, presented a lot of interesting challenges. 
+    The original AB3 only had 1 entity, `Person`, being managed by the `AddressBook`. At a high level, you might say the same thing about ScheDar, with only `Task` being managed by `TaskManager`.
+    However, since there are multiple subclasses of `Task`, we had to take careful consideration in our design of the `ToDo`, `Deadline` and `Event` subclasses and the `TaskManager` itself, to ensure that all features were compatible with all subclasses.
+
+
+An example of this challenge was in implementing the `done` and `undo` commands. Our initial implementation of `done` was simple, just updating the `DoneStatus` of all 3 classes of `Task`.
+    However, this could not work with our `undo` command, making it unable to roll back any `done` operation. We had to reimplement `done` in a way that is closer to an `edit` operation, creating a new copy of the `Task` with the new `DoneStatus` before it could be compatible with the `undo` command.  
+
+
+### **Challenge 2: Team size**
+
+With a team size of just 3 people, we were always under the constraints of manpower and time. Many tasks have a fixed base effort required, such as team tasks.
+Teams with more members can afford to split the work (such as DG and UG updates, JAR relelases, etc. ) among more members, thus reducing the time that team members need to spend on non-coding tasks and letting team members focus on implementing their own features.
+
+The small team size also restricted our ability to implement many features. As not all team members are similarly strong or quick coders, we had to try to optimize how tasks are divided to ensure maximum work is done in the shortest amount of time, and this might lead to unequal contribution when measured by lines-of-code.
+However, we did try to ensure that team members spent about the same amount of time and effort on the project, while trying to maximize outcomes. With an additional member or two, we believe that we could have implemented more features and worked more efficiently, improving team performance (before hitting the point of diminishing marginal returns).
